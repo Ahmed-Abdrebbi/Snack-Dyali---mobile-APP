@@ -20,22 +20,22 @@ export const getPlats = async () => {
   }
 };
 
-export const getPlatById = async (id) => {
+export const getPlatById = async (id: any) => {
   const { data } = await api.get(`/plats/${id}`);
   return data;
 };
 
-export const createPlat = async (platData) => {
+export const createPlat = async (platData: any) => {
   const { data } = await api.post('/plats', platData);
   return data;
 };
 
-export const updatePlat = async ({ id, ...platData }) => {
+export const updatePlat = async ({ id, ...platData }: { id: any; [key: string]: any }) => {
   const { data } = await api.put(`/plats/${id}`, platData);
   return data;
 };
 
-export const deletePlat = async (id) => {
+export const deletePlat = async (id: any) => {
   const { data } = await api.delete(`/plats/${id}`);
   return data;
 };

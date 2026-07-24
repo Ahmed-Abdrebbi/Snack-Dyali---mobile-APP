@@ -97,7 +97,7 @@ export const StitchCard = ({
   children,
   style,
 }: {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   style?: ViewStyle;
 }) => {
   return <View style={[styles.card, style]}>{children}</View>;

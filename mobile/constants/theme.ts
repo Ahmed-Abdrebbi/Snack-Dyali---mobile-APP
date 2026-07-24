@@ -6,43 +6,46 @@
 
 import { Platform } from 'react-native';
 
+const darkTheme = {
+  // Backgrounds
+  background: '#000000',        // True Black — primary background
+  backgroundElevated: '#121212', // Deep Charcoal — secondary/elevated background
+  
+  // Surfaces
+  surface: '#1A1A1A',           // Card/surface fill
+  surfaceBorder: '#2A2A2A',     // Subtle border on surfaces
+  
+  // Text
+  text: '#FFFFFF',              // Primary text — pure white
+  textSecondary: '#E0E0E0',     // Secondary text — light grey
+  textMuted: '#888888',         // Muted/dim text
+  textDisabled: '#555555',      // Disabled text
+  
+  // Accents
+  primary: '#D4AF37',           // Saffron Gold — primary actions, available state
+  primaryText: '#000000',       // Text on primary background
+  secondary: '#E53935',         // Harissa Red — destructive actions, unavailable state
+  secondaryText: '#FFFFFF',     // Text on secondary background
+  
+  // Semantic
+  success: '#4CAF50',           // Success/available indicator
+  
+  // Aliases
+  tint: '#D4AF37',
+  icon: '#FFFFFF',
+  iconMuted: '#888888',
+  tabIconDefault: '#888888',
+  tabIconSelected: '#D4AF37',
+  
+  // Toggle
+  toggleActive: '#D4AF37',
+  toggleInactive: '#333333',
+  toggleThumb: '#FFFFFF',
+};
+
 export const Colors = {
-  dark: {
-    // Backgrounds
-    background: '#000000',        // True Black — primary background
-    backgroundElevated: '#121212', // Deep Charcoal — secondary/elevated background
-    
-    // Surfaces
-    surface: '#1A1A1A',           // Card/surface fill
-    surfaceBorder: '#2A2A2A',     // Subtle border on surfaces
-    
-    // Text
-    text: '#FFFFFF',              // Primary text — pure white
-    textSecondary: '#E0E0E0',     // Secondary text — light grey
-    textMuted: '#888888',         // Muted/dim text
-    textDisabled: '#555555',      // Disabled text
-    
-    // Accents
-    primary: '#D4AF37',           // Saffron Gold — primary actions, available state
-    primaryText: '#000000',       // Text on primary background
-    secondary: '#E53935',         // Harissa Red — destructive actions, unavailable state
-    secondaryText: '#FFFFFF',     // Text on secondary background
-    
-    // Semantic
-    success: '#4CAF50',           // Success/available indicator
-    
-    // Aliases
-    tint: '#D4AF37',
-    icon: '#FFFFFF',
-    iconMuted: '#888888',
-    tabIconDefault: '#888888',
-    tabIconSelected: '#D4AF37',
-    
-    // Toggle
-    toggleActive: '#D4AF37',
-    toggleInactive: '#333333',
-    toggleThumb: '#FFFFFF',
-  },
+  dark: darkTheme,
+  light: darkTheme,
 };
 
 export const Fonts = Platform.select({
