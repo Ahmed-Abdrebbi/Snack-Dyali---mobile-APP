@@ -22,7 +22,7 @@ export default function IntroScreen() {
         {/* Logo Section */}
         <View style={styles.logoContainer}>
           <Image 
-            source={require('../assets/images/snack-dyali-text-logo.png')} 
+            source={require('../assets/images/snack-dyali-logo.png')} 
             style={styles.logoImage} 
             resizeMode="contain" 
           />
