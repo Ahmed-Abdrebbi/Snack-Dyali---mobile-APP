@@ -1,327 +1,183 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-  Alert,
-  Platform,
-  ImageBackground,
-  TouchableOpacity,
-  ScrollView,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { View, Text, StyleSheet, Image, ScrollView, Pressable, Alert, GestureResponderEvent } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { getPlatById, deletePlat } from '../src/api/plats';
-import { Spacing } from '@/constants/theme';
+// Local fallback PrimaryButton to avoid unresolved import during development.
+
+type DishWithExtras = {
+  id: number;
+  nom: string;
+  prix: number;
+  categorie: string;
+  disponible: boolean;
+  description: string;
+  prepTime: string;
+  image: string | null;
+};
+
+type PrimaryButtonProps = {
+  label: string;
+  variant?: 'default' | 'outline' | 'danger';
+  onPress?: (e: GestureResponderEvent) => void;
+};
+
+function PrimaryButton({ label, variant = 'default', onPress }: PrimaryButtonProps) {
+  const btnStyles = [
+    styles.primaryButton,
+    variant === 'outline' && styles.primaryButtonOutline,
+    variant === 'danger' && styles.primaryButtonDanger,
+  ];
+  const textStyle = [styles.primaryButtonLabel, variant === 'outline' && styles.primaryButtonLabelOutline];
+
+  return (
+    <Pressable style={btnStyles as any} onPress={onPress}>
+      <Text style={textStyle as any}>{label}</Text>
+    </Pressable>
+  );
+}
+
+// TODO: replace with useQuery(["plats", id], () => getPlatById(id)).
+// `description` and `prepTime` are NOT in your backend model — local-only
+// until you decide to extend the `plats` table.
+const MOCK_DISH: DishWithExtras = {
+  id: 1,
+  nom: 'Tacos Poulet',
+  prix: 45,
+  categorie: 'Main Course',
+  disponible: true,
+  description:
+    'Classic French-style taco loaded with tender grilled chicken breast, our signature secret sauce, crispy fries, and a rich blend of melted gruyère and cheddar cheese, all wrapped in a freshly pressed flour tortilla.',
+  prepTime: '10-15 mins',
+  image: null,
+};
+
+const colors = {
+  background: '#ffffff',
+  surface: '#f3f4f6',
+  textPrimary: '#111827',
+  textSecondary: '#6b7280',
+  textMuted: '#9ca3af',
+  accent: '#ef4444',
+};
 
 export default function DishDetailScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const params = useLocalSearchParams();
-  const queryClient = useQueryClient();
-  const insets = useSafeAreaInsets();
-  const id = params.id as string;
+  const dish = MOCK_DISH; // TODO: look up the real dish by `id`
 
-  const { data: plat, isLoading } = useQuery({
-    queryKey: ['plat', id],
-    queryFn: () => getPlatById(id),
-    enabled: !!id,
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: () => deletePlat(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['plats'] });
-      router.back();
-    },
-    onError: (error: any) => {
-      Alert.alert('Error', error.message || 'Impossible to delete this dish');
-    },
-  });
-
-  const handleDelete = () => {
-    Alert.alert(
-      'Delete Dish',
-      `Are you sure you want to delete "${plat?.nom}"? This action cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => deleteMutation.mutate(),
+  function confirmDelete() {
+    Alert.alert('Delete this dish?', 'This action cannot be undone.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => {
+          // TODO: useMutation calling DELETE /api/plats/:id,
+          // then invalidateQueries(["plats"]) and navigate back.
+          router.back();
         },
-      ]
-    );
-  };
-
-  if (isLoading || !plat) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#ff7a00" />
-      </View>
-    );
+      },
+    ]);
   }
 
   return (
-    <View style={styles.container}>
-      <ScrollView bounces={false} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
-        {/* Header Image */}
-        <ImageBackground
-          source={{ uri: 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?q=80&w=1000' }}
-          style={[styles.headerImage, { paddingTop: insets.top || (Platform.OS === 'web' ? 16 : 48) }]}
-          imageStyle={styles.headerImageBg}
-        >
-          {/* Dark overlay for readability */}
-          <View style={styles.imageOverlay} />
-          
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={20} color="#e3e2e2" />
-            <Text style={styles.backText}>Menu</Text>
-          </TouchableOpacity>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 32 }}>
+      <View style={styles.header}>
+        <Pressable style={styles.backRow} onPress={() => router.back()}>
+          <Ionicons name="chevron-back" size={20} color={colors.textPrimary} />
+          <Text style={styles.backLabel}>Home</Text>
+        </Pressable>
+      </View>
 
-          <View style={styles.badgeContainer}>
-            <View style={styles.badgeDot} />
-            <Text style={styles.badgeText}>{plat.disponible ? 'AVAILABLE' : 'UNAVAILABLE'}</Text>
+      <View style={styles.imageWrapper}>
+        {dish.image ? (
+          <Image source={{ uri: dish.image }} style={styles.image} />
+        ) : (
+          <View style={[styles.image, styles.imagePlaceholder]}>
+            <Ionicons name="fast-food-outline" size={40} color={colors.textMuted} />
           </View>
-        </ImageBackground>
+        )}
+      </View>
 
-        <View style={styles.content}>
-          <Text style={styles.dishName}>{plat.nom}</Text>
-          <Text style={styles.dishPrice}>{plat.prix} MAD</Text>
+      <View style={styles.body}>
+        <Text style={styles.name}>{dish.nom}</Text>
+        <Text style={styles.price}>{dish.prix} MAD</Text>
 
-          {/* Description Card */}
-          <View style={styles.card}>
-            <Text style={styles.cardLabel}>DESCRIPTION</Text>
-            <Text style={styles.descriptionText}>
-              Classic French-style taco loaded with tender grilled chicken breast, our signature secret sauce, crispy fries, and a rich blend of melted gruyère and cheddar cheese, all wrapped in a freshly pressed flour tortilla.
-            </Text>
+        <Text style={styles.sectionLabel}>DESCRIPTION</Text>
+        <Text style={styles.description}>{dish.description}</Text>
+
+        <View style={styles.infoRow}>
+          <View style={styles.infoCol}>
+            <Text style={styles.infoLabel}>Category</Text>
+            <Text style={styles.infoValue}>{dish.categorie}</Text>
           </View>
-
-          {/* Details Card */}
-          <View style={styles.card}>
-            <View style={styles.detailRow}>
-              <View style={styles.detailRowLeft}>
-                <Ionicons name="layers-outline" size={18} color="#ff7a00" />
-                <Text style={styles.detailLabel}>Category</Text>
-              </View>
-              <Text style={styles.detailValue}>{plat.categorie || 'Main Course'}</Text>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.detailRow}>
-              <View style={styles.detailRowLeft}>
-                <Ionicons name="time-outline" size={18} color="#ff7a00" />
-                <Text style={styles.detailLabel}>Prep Time</Text>
-              </View>
-              <Text style={styles.detailValue}>10-15 mins</Text>
-            </View>
+          <View style={styles.infoCol}>
+            <Text style={styles.infoLabel}>Prep Time</Text>
+            <Text style={styles.infoValue}>{dish.prepTime}</Text>
           </View>
         </View>
-      </ScrollView>
 
-      {/* Bottom Actions */}
-      <View style={[styles.bottomActions, { paddingBottom: insets.bottom || 24 }]}>
-        <TouchableOpacity
-          style={styles.editButton}
-          onPress={() => router.push({ pathname: '/modal', params: { id: plat.id } })}
-        >
-          <Ionicons name="pencil-outline" size={18} color="#ff7a00" />
-          <Text style={styles.editButtonText}>EDIT DISH</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={handleDelete}
-          disabled={deleteMutation.isPending}
-        >
-          {deleteMutation.isPending ? (
-            <ActivityIndicator color="#690006" size="small" />
-          ) : (
-            <>
-              <Ionicons name="trash-outline" size={18} color="#690006" />
-              <Text style={styles.deleteButtonText}>DELETE DISH</Text>
-            </>
-          )}
-        </TouchableOpacity>
+        <View style={styles.actions}>
+          <View style={{ flex: 1 }}>
+            <PrimaryButton
+              label="EDIT DISH"
+              variant="outline"
+              onPress={() => router.push(`/modal?id=${dish.id}`)}
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <PrimaryButton label="DELETE DISH" variant="danger" onPress={confirmDelete} />
+          </View>
+        </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  container: { flex: 1, backgroundColor: colors.background },
+  header: { padding: 16 },
+  backRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  backLabel: { color: colors.textPrimary, fontWeight: '600' },
+  imageWrapper: { paddingHorizontal: 16 },
+  image: { width: '100%', height: 220, borderRadius: 20 },
+  imagePlaceholder: { backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
+  body: { padding: 20, gap: 6 },
+  name: { color: colors.textPrimary, fontSize: 22, fontWeight: '700' },
+  price: { color: colors.accent, fontSize: 18, fontWeight: '700', marginBottom: 12 },
+  sectionLabel: { color: colors.textSecondary, fontSize: 12, letterSpacing: 1, marginTop: 8 },
+  description: { color: colors.textSecondary, fontSize: 14, lineHeight: 21, marginTop: 6 },
+  infoRow: { flexDirection: 'row', gap: 16, marginTop: 20 },
+  infoCol: {
     flex: 1,
-    backgroundColor: '#121414',
+    backgroundColor: colors.surface,
+    borderRadius: 14,
+    padding: 14,
   },
-  loadingContainer: {
-    flex: 1,
-    backgroundColor: '#121414',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerImage: {
-    width: '100%',
-    height: 300,
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.screenPadding,
-    paddingBottom: 20,
-  },
-  headerImageBg: {
-    opacity: 0.8,
-  },
-  imageOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-  },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10,
-    zIndex: 10,
-  },
-  backText: {
-    fontFamily: 'Inter',
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#e3e2e2',
-    marginLeft: 8,
-  },
-  badgeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(18, 20, 20, 0.8)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    alignSelf: 'flex-start',
-    zIndex: 10,
-  },
-  badgeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#ff7a00',
-    marginRight: 6,
-  },
-  badgeText: {
-    fontFamily: 'Inter',
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#e3e2e2',
-    letterSpacing: 1,
-  },
-  content: {
-    paddingHorizontal: Spacing.screenPadding,
-    paddingTop: 20,
-  },
-  dishName: {
-    fontFamily: 'Inter',
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#e3e2e2',
-    marginBottom: 4,
-  },
-  dishPrice: {
-    fontFamily: 'Inter',
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#ff7a00',
-    marginBottom: 24,
-  },
-  card: {
-    backgroundColor: '#1a1c1c',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#292a2a',
-  },
-  cardLabel: {
-    fontFamily: 'Inter',
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#ff7a00',
-    letterSpacing: 1,
-    marginBottom: 12,
-  },
-  descriptionText: {
-    fontFamily: 'Inter',
-    fontSize: 14,
-    lineHeight: 22,
-    color: '#e3e2e2',
-  },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  detailRowLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  detailLabel: {
-    fontFamily: 'Inter',
-    fontSize: 12,
-    color: '#e3e2e2',
-  },
-  detailValue: {
-    fontFamily: 'Inter',
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#e3e2e2',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#292a2a',
-    marginVertical: 16,
-  },
-  bottomActions: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    paddingHorizontal: Spacing.screenPadding,
-    paddingTop: 16,
-    backgroundColor: '#121414',
-    borderTopWidth: 1,
-    borderTopColor: '#292a2a',
-    gap: 12,
-  },
-  editButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 48,
+  infoLabel: { color: colors.textMuted, fontSize: 11, marginBottom: 4 },
+  infoValue: { color: colors.textPrimary, fontWeight: '600' },
+  actions: { flexDirection: 'row', gap: 12, marginTop: 28 },
+  primaryButton: {
+    backgroundColor: colors.accent,
+    paddingVertical: 12,
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ff7a00',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  primaryButtonOutline: {
     backgroundColor: 'transparent',
-    gap: 8,
+    borderWidth: 2,
+    borderColor: colors.accent,
   },
-  editButtonText: {
-    fontFamily: 'Inter',
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#ff7a00',
+  primaryButtonDanger: {
+    backgroundColor: colors.accent,
   },
-  deleteButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 48,
-    borderRadius: 8,
-    backgroundColor: '#ffb4ac', // Light red from design system
-    gap: 8,
+  primaryButtonLabel: {
+    color: '#ffffff',
+    fontWeight: '600',
+    fontSize: 14,
   },
-  deleteButtonText: {
-    fontFamily: 'Inter',
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#690006', // Dark red from design system
+  primaryButtonLabelOutline: {
+    color: colors.accent,
   },
 });
